@@ -1,0 +1,7 @@
+.agents
+coverage
+dist
+node_modules
+openspec
+pnpm-lock.yaml
+tmp
