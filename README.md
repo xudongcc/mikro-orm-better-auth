@@ -45,8 +45,21 @@ Generated files:
 - use `@Entity`, `@PrimaryKey`, and `@Property`
 - include one managed `*.entity.ts` file per Better Auth model
 - reflect Better Auth table and field name transforms
-- are rewritten deterministically on regeneration
-- remove stale managed files from the output directory
+- are patched in place on regeneration instead of being fully overwritten
+- preserve user-owned imports, decorators, methods, extra properties, and comments
+- only update generator-owned fragments such as managed fields, types, and MikroORM decorators
+- do not add management comments or sidecar state files to generated entities
+- do not automatically delete existing files or unmatched properties during regeneration
+
+Managed file boundaries:
+
+- the generator owns Better Auth-managed fields and MikroORM decorators such as `@Entity`, `@PrimaryKey`, and `@Property`
+- everything else in the file is treated as user-owned code and is preserved during regeneration whenever the file can be patched safely
+
+Unsupported or rejected cases:
+
+- if an existing file does not contain the expected exported entity class, generation fails instead of guessing how to patch it
+- direct edits to generator-owned field definitions or MikroORM decorator arguments may be replaced on the next generation
 
 ## Scope
 

@@ -2,7 +2,6 @@ import type { DBAdapterDebugLogOption } from "better-auth/adapters";
 
 export interface MikroOrmGenerateEntityConfig {
   outputDir?: string;
-  managedComment?: string;
 }
 
 export interface MikroOrmAdapterConfig {
