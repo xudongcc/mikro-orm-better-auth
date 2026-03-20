@@ -32,10 +32,10 @@ describe("createSchema", () => {
     );
 
     expect(creation?.path).toBe(path.join(outputDir, "user.entity.ts"));
-    expect(creation?.code).toContain("@Entity({ tableName: 'members' })");
-    expect(entityFile).toContain("@Entity({ tableName: 'members' })");
-    expect(entityFile).toContain("fieldName: 'display_name'");
-    expect(entityFile).toContain("fieldName: 'email_address'");
+    expect(creation?.code).toContain('@Entity({ tableName: "members" })');
+    expect(entityFile).toContain('@Entity({ tableName: "members" })');
+    expect(entityFile).toContain('fieldName: "display_name"');
+    expect(entityFile).toContain('fieldName: "email_address"');
 
     await orm.close(true);
   });

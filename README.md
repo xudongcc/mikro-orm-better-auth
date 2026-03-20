@@ -5,7 +5,7 @@ Better Auth adapter for MikroORM, with a `createSchema` implementation that gene
 ## Install
 
 ```bash
-pnpm add better-auth @mikro-orm/core @mikro-orm/knex ts-morph
+pnpm add better-auth @mikro-orm/core @mikro-orm/knex prettier ts-morph
 pnpm add -D @better-auth/test-utils @mikro-orm/sqlite typescript vitest
 ```
 
@@ -46,6 +46,7 @@ Generated files:
 - include one managed `*.entity.ts` file per Better Auth model
 - reflect Better Auth table and field name transforms
 - are patched in place on regeneration instead of being fully overwritten
+- are formatted with Prettier before they are written, using the resolved config for the target file path
 - preserve user-owned imports, decorators, methods, extra properties, and comments
 - only update generator-owned fragments such as managed fields, types, and MikroORM decorators
 - do not add management comments or sidecar state files to generated entities

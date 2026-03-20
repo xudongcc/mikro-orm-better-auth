@@ -16,6 +16,7 @@ import type {
   DBFieldAttribute,
   DBFieldType,
 } from "better-auth/db";
+import { format as formatWithPrettier, resolveConfig } from "prettier";
 import type { MikroOrmGenerateEntityConfig } from "../types.js";
 import { escapeString, toKebabCase, toPascalCase } from "./string.js";
 
@@ -96,7 +97,7 @@ export async function generateEntityFiles({
     if (exists) {
       const sourceFile = project.addSourceFileAtPath(entityPath);
 
-      patchEntitySourceFile({
+      await patchEntitySourceFile({
         sourceFile,
         filePath: entityPath,
         entityDefinition,
@@ -109,7 +110,7 @@ export async function generateEntityFiles({
     });
 
     renderEntitySourceFile(sourceFile, entityDefinition);
-    finalizeSourceFile(sourceFile);
+    await finalizeSourceFile(sourceFile, entityPath);
   }
 
   await project.save();
@@ -252,7 +253,7 @@ function patchEntitySourceFile({
     });
   }
 
-  finalizeSourceFile(sourceFile);
+  return finalizeSourceFile(sourceFile, filePath);
 }
 
 function reconcileManagedImport(sourceFile: SourceFile) {
@@ -344,12 +345,33 @@ function findNamedClassMember(
   });
 }
 
-function finalizeSourceFile(sourceFile: SourceFile) {
+async function finalizeSourceFile(sourceFile: SourceFile, filePath: string) {
   sourceFile.formatText({
     indentSize: 2,
     convertTabsToSpaces: true,
     semicolons: ts.SemicolonPreference.Insert,
   });
+
+  const sourceText = `${sourceFile.getFullText().trimEnd()}\n`;
+
+  try {
+    const prettierConfig =
+      (await resolveConfig(filePath, {
+        editorconfig: true,
+      })) ?? {};
+    const formattedText = await formatWithPrettier(sourceText, {
+      ...prettierConfig,
+      filepath: filePath,
+    });
+
+    sourceFile.replaceWithText(formattedText);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Failed to format generated file at ${filePath} with Prettier: ${message}`,
+      { cause: error },
+    );
+  }
 }
 
 async function fileExists(filePath: string) {
