@@ -1,6 +1,6 @@
 {
   "name": "mikro-orm-better-auth",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "Better Auth adapter for MikroORM with ts-morph entity generation.",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,8 +12,7 @@
     }
   },
   "files": [
-    "dist",
-    "README.md"
+    "dist"
   ],
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
