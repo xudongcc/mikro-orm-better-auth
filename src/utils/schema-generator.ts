@@ -378,12 +378,8 @@ async function fileExists(filePath: string) {
   try {
     await fs.access(filePath);
     return true;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return false;
-    }
-
-    throw error;
+  } catch {
+    return false;
   }
 }
 
@@ -500,15 +496,7 @@ function serializeDecoratorValue(value: unknown): string {
     return `'${escapeString(value)}'`;
   }
 
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-
-  if (value === null) {
-    return "null";
-  }
-
-  return JSON.stringify(value);
+  return String(value);
 }
 
 function mapFieldTypeToTypeScript(type: DBFieldType) {

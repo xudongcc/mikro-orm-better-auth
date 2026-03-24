@@ -107,4 +107,29 @@ describe("mikroOrmAdapter operations", () => {
     expect(updated).toBeNull();
     await orm.close(true);
   });
+
+  test("findOne with select returns only the requested fields", async () => {
+    const orm = await createInMemoryOrm();
+    const options = {} as BetterAuthOptions;
+
+    await createBetterAuthTables(orm, options);
+    const adapter = createAdapter(options, orm);
+
+    await adapter.create({
+      model: "user",
+      data: buildModelData(options, "user", {
+        email: "select@example.com",
+        name: "SelectUser",
+      }),
+    });
+
+    const found = await adapter.findOne<{ email: string; name?: string }>({
+      model: "user",
+      where: [{ field: "email", operator: "eq", value: "select@example.com" }],
+      select: ["email"],
+    });
+
+    expect(found).not.toBeNull();
+    expect(found?.email).toBe("select@example.com");
+  });
 });

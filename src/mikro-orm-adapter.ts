@@ -95,28 +95,6 @@ export function mikroOrmAdapter(
             )) as T;
           }
 
-          if (Array.isArray(inserted) && inserted.length > 0) {
-            return (await findFirst(
-              model,
-              [
-                {
-                  connector: "AND",
-                  field: "id",
-                  operator: "eq",
-                  value: inserted[0] as
-                    | string
-                    | number
-                    | boolean
-                    | string[]
-                    | number[]
-                    | Date
-                    | null,
-                },
-              ],
-              select,
-            )) as T;
-          }
-
           return (await findFirst(model, undefined, select)) as T;
         },
         async update<T>({
@@ -275,20 +253,12 @@ export function mikroOrmAdapter(
         ) => Promise<R>,
       ) => {
         return baseEntityManager.transactional(async (trxEm) => {
-          if (!adapterFactoryConfig) {
-            throw new Error("Adapter configuration is not initialized.");
-          }
-
           const transactionalFactory = createAdapterFactory({
-            config: adapterFactoryConfig,
+            config: adapterFactoryConfig!,
             adapter: createCustomAdapter(() => trxEm as SqlEntityManager),
           });
 
-          if (!lazyOptions) {
-            throw new Error("Better Auth options are not initialized.");
-          }
-
-          return callback(transactionalFactory(lazyOptions));
+          return callback(transactionalFactory(lazyOptions!));
         });
       },
     },

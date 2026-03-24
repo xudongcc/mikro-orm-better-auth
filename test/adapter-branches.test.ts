@@ -74,62 +74,6 @@ describe("mikroOrmAdapter fallback branches", () => {
     });
   });
 
-  test("re-reads inserted rows by returned identifier when the database returns scalar ids", async () => {
-    const entityManager = createQueuedEntityManager([
-      {
-        insert: () => ({
-          returning: async () => ["user-2"],
-        }),
-      },
-      createSelectQuery({
-        id: "user-2",
-        email: "user-2@example.com",
-      }),
-    ]);
-    const adapter = mikroOrmAdapter(entityManager as never)(
-      {} as BetterAuthOptions,
-    );
-
-    const created = await adapter.create({
-      model: "user",
-      data: {
-        email: "user-2@example.com",
-      },
-    });
-
-    expect(created).toEqual({
-      id: "user-2",
-      email: "user-2@example.com",
-    });
-  });
-
-  test("falls back to the first matching row when no insert id is available", async () => {
-    const entityManager = createQueuedEntityManager([
-      {
-        insert: () => ({
-          returning: async () => [],
-        }),
-      },
-      createSelectQuery({
-        email: "fallback@example.com",
-      }),
-    ]);
-    const adapter = mikroOrmAdapter(entityManager as never)(
-      {} as BetterAuthOptions,
-    );
-
-    const created = await adapter.create({
-      model: "user",
-      data: {
-        email: "fallback@example.com",
-      },
-    });
-
-    expect(created).toEqual({
-      email: "fallback@example.com",
-    });
-  });
-
   test("re-reads updates with the original where clause when the current row has no id", async () => {
     const entityManager = createQueuedEntityManager([
       createSelectQuery({

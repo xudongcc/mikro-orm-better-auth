@@ -274,6 +274,7 @@ describe("schema generator utilities", () => {
             email: {
               type: "string",
               fieldName: "email_address",
+              defaultValue: "unknown",
             },
           },
         },
@@ -285,6 +286,7 @@ describe("schema generator utilities", () => {
 
     expect(patchedCode).toContain("name!: string;");
     expect(patchedCode).toContain('fieldName: "email_address"');
+    expect(patchedCode).toContain('email: string = "unknown"');
     expect(patchedCode).toContain("/** User-owned comment */");
     expect(patchedCode).toContain("nickname?: string;");
     expect(patchedCode).toContain("get displayEmail()");
@@ -363,6 +365,65 @@ describe("schema generator utilities", () => {
     ).rejects.toThrow(`File at ${target} could not be patched safely`);
   });
 
+  test("fails when the entity class exists but is not exported", async () => {
+    const outputDir = await createTempDir(
+      "mikro-orm-better-auth-not-exported-",
+    );
+    const target = path.join(outputDir, "user.entity.ts");
+
+    await fs.writeFile(
+      target,
+      'import { Entity } from "@mikro-orm/core";\n@Entity()\nclass User {}\n',
+      "utf8",
+    );
+
+    await expect(
+      generateEntityFiles({
+        file: outputDir,
+        tables: {
+          user: {
+            modelName: "users",
+            fields: {
+              email: { type: "string" },
+            },
+          },
+        },
+        options: {} as BetterAuthOptions,
+      }),
+    ).rejects.toThrow("is not exported");
+  });
+
+  test("adds missing named imports when @mikro-orm/core import already exists", async () => {
+    const outputDir = await createTempDir(
+      "mikro-orm-better-auth-partial-import-",
+    );
+    const entityPath = path.join(outputDir, "user.entity.ts");
+
+    await fs.writeFile(
+      entityPath,
+      'import { Entity } from "@mikro-orm/core";\n\n@Entity({ tableName: "users" })\nexport class User {\n  id!: string;\n}\n',
+      "utf8",
+    );
+
+    await generateEntityFiles({
+      file: outputDir,
+      tables: {
+        user: {
+          modelName: "users",
+          fields: {
+            email: { type: "string" },
+          },
+        },
+      },
+      options: {} as BetterAuthOptions,
+    });
+
+    const patchedCode = await fs.readFile(entityPath, "utf8");
+
+    expect(patchedCode).toContain("PrimaryKey");
+    expect(patchedCode).toContain("Property");
+  });
+
   test("fails with a clear error when Prettier config cannot be resolved", async () => {
     const workspaceDir = await createTempDir(
       "mikro-orm-better-auth-invalid-prettier-",
@@ -391,6 +452,138 @@ describe("schema generator utilities", () => {
         options: {} as BetterAuthOptions,
       }),
     ).rejects.toThrow("Failed to format generated file");
+  });
+
+  test("treats enum-like array field types as string", async () => {
+    const outputDir = await createTempDir("mikro-orm-better-auth-enum-");
+    const tables = {
+      user: {
+        modelName: "users",
+        fields: {
+          role: {
+            type: ["admin", "user", "guest"] as unknown as "string",
+          },
+        },
+      },
+    } satisfies BetterAuthDBSchema;
+
+    await generateEntityFiles({
+      file: outputDir,
+      tables,
+      options: {} as BetterAuthOptions,
+    });
+
+    const entityCode = await fs.readFile(
+      path.join(outputDir, "user.entity.ts"),
+      "utf8",
+    );
+
+    expect(entityCode).toContain("role!: string;");
+    expect(entityCode).toContain('type: "string"');
+  });
+
+  test("resolves file path with extension to its parent directory", async () => {
+    const outputDir = await createTempDir("mikro-orm-better-auth-ext-");
+    const filePath = path.join(outputDir, "user.entity.ts");
+    const tables = {
+      user: {
+        modelName: "users",
+        fields: {
+          email: {
+            type: "string",
+          },
+        },
+      },
+    } satisfies BetterAuthDBSchema;
+
+    const result = await generateEntityFiles({
+      file: filePath,
+      tables,
+      options: {} as BetterAuthOptions,
+    });
+
+    expect(result.path).toBe(path.join(outputDir, "user.entity.ts"));
+  });
+
+  test("fails when patching a file where a non-property member has the same name", async () => {
+    const outputDir = await createTempDir(
+      "mikro-orm-better-auth-conflict-member-",
+    );
+    const entityPath = path.join(outputDir, "user.entity.ts");
+
+    await generateEntityFiles({
+      file: outputDir,
+      tables: {
+        user: {
+          modelName: "users",
+          fields: {
+            email: {
+              type: "string",
+            },
+          },
+        },
+      },
+      options: {} as BetterAuthOptions,
+    });
+
+    const initialCode = await fs.readFile(entityPath, "utf8");
+    const customizedCode = initialCode.replace(
+      "\n}",
+      "\n\n  name() {\n    return 'test';\n  }\n}",
+    );
+
+    await fs.writeFile(entityPath, customizedCode, "utf8");
+
+    await expect(
+      generateEntityFiles({
+        file: outputDir,
+        tables: {
+          user: {
+            modelName: "users",
+            fields: {
+              email: {
+                type: "string",
+              },
+              name: {
+                type: "string",
+              },
+            },
+          },
+        },
+        options: {} as BetterAuthOptions,
+      }),
+    ).rejects.toThrow("is not a property");
+  });
+
+  test("uses custom outputDir from generateEntityConfig when no file is provided", async () => {
+    const workspaceDir = await createTempDir(
+      "mikro-orm-better-auth-custom-dir-",
+    );
+    const customOutputDir = path.join(workspaceDir, "custom-entities");
+
+    const result = await generateEntityFiles({
+      tables: {
+        user: {
+          modelName: "users",
+          fields: {
+            email: {
+              type: "string",
+            },
+          },
+        },
+      },
+      options: {} as BetterAuthOptions,
+      generateEntityConfig: {
+        outputDir: customOutputDir,
+      },
+    });
+
+    expect(result.path).toBe(
+      path.join(customOutputDir, "user.entity.ts"),
+    );
+    await expect(
+      fs.stat(path.join(customOutputDir, "user.entity.ts")),
+    ).resolves.toBeDefined();
   });
 });
 
