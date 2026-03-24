@@ -7,7 +7,6 @@ import {
 } from "better-auth/adapters";
 import { SqlEntityManager } from "@mikro-orm/knex";
 import type { MikroOrmAdapterConfig } from "./types.js";
-import { normalizeEntityManager } from "./utils/entity-manager.js";
 import { normalizeAffectedRows, normalizeCount } from "./utils/normalize.js";
 import { applyWhere, buildTableQuery } from "./utils/query.js";
 import { generateEntityFiles } from "./utils/schema-generator.js";
@@ -18,10 +17,9 @@ export type {
 } from "./types.js";
 
 export function mikroOrmAdapter(
-  em: SqlEntityManager,
+  getEntityManager: () => SqlEntityManager,
   config: MikroOrmAdapterConfig = {},
 ) {
-  const baseEntityManager = normalizeEntityManager(em);
   let lazyOptions: BetterAuthOptions | null = null;
   let adapterFactoryConfig: AdapterFactoryConfig | null = null;
 
@@ -252,7 +250,8 @@ export function mikroOrmAdapter(
           trx: ReturnType<ReturnType<typeof createAdapterFactory>>,
         ) => Promise<R>,
       ) => {
-        return baseEntityManager.transactional(async (trxEm) => {
+        const em = getEntityManager();
+        return em.transactional(async (trxEm) => {
           const transactionalFactory = createAdapterFactory({
             config: adapterFactoryConfig!,
             adapter: createCustomAdapter(() => trxEm as SqlEntityManager),
@@ -262,7 +261,7 @@ export function mikroOrmAdapter(
         });
       },
     },
-    adapter: createCustomAdapter(() => baseEntityManager),
+    adapter: createCustomAdapter(getEntityManager),
   });
 
   adapterFactoryConfig = {

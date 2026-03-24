@@ -24,7 +24,17 @@ const orm = await MikroORM.init<SqliteDriver>({
 });
 
 export const auth = betterAuth({
-  database: mikroOrmAdapter(orm.em),
+  database: mikroOrmAdapter(() => orm.em),
+});
+```
+
+With `RequestContext` (per-request EntityManager isolation):
+
+```ts
+import { RequestContext } from "@mikro-orm/core";
+
+export const auth = betterAuth({
+  database: mikroOrmAdapter(() => RequestContext.getEntityManager()! as SqlEntityManager),
 });
 ```
 
@@ -33,7 +43,7 @@ export const auth = betterAuth({
 Better Auth calls the adapter's `createSchema` hook, and this adapter uses `generateEntity` as the configuration key for controlling entity generation. By default it writes to `src/auth/entities`, or to the directory implied by the output path Better Auth passes in.
 
 ```ts
-const adapter = mikroOrmAdapter(orm.em, {
+const adapter = mikroOrmAdapter(() => orm.em, {
   generateEntity: {
     outputDir: "src/auth/entities",
   },

@@ -55,7 +55,7 @@ describe("mikroOrmAdapter fallback branches", () => {
         email: "user-1@example.com",
       }),
     ]);
-    const adapter = mikroOrmAdapter(entityManager as never)(
+    const adapter = mikroOrmAdapter(() => entityManager as never)(
       {} as BetterAuthOptions,
     );
 
@@ -86,7 +86,7 @@ describe("mikroOrmAdapter fallback branches", () => {
         email: "after@example.com",
       }),
     ]);
-    const adapter = mikroOrmAdapter(entityManager as never)(
+    const adapter = mikroOrmAdapter(() => entityManager as never)(
       {} as BetterAuthOptions,
     );
 

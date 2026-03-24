@@ -21,5 +21,5 @@ export const auth = betterAuth({
       email: "email_address",
     },
   },
-  database: mikroOrmAdapter(orm.em),
+  database: mikroOrmAdapter(() => orm.em),
 });

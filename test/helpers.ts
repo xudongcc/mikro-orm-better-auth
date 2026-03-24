@@ -91,7 +91,7 @@ export function createAdapter(
   options: BetterAuthOptions,
   orm: MikroORM<SqliteDriver>,
 ) {
-  return mikroOrmAdapter(orm.em)(options);
+  return mikroOrmAdapter(() => orm.em)(options);
 }
 
 export function buildModelData(

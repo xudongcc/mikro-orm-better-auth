@@ -63,7 +63,7 @@ const basicCrudSuite = createTestSuite(
 
 const contractOrm = await createInMemoryOrm();
 const contractRunner = await testAdapter({
-  adapter: async () => mikroOrmAdapter(contractOrm.em),
+  adapter: async () => mikroOrmAdapter(() => contractOrm.em),
   runMigrations: async (options) => {
     await createBetterAuthTables(contractOrm, options);
   },

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { normalizeEntityManager } from "../src/utils/entity-manager.js";
 import {
   normalizeAffectedRows,
   normalizeCount,
@@ -69,20 +68,6 @@ function createRecordingQuery() {
 }
 
 describe("utility helpers", () => {
-  test("normalizes SQL entity managers", () => {
-    const entityManager = {
-      getKnex: () => () => ({}),
-    };
-
-    expect(normalizeEntityManager(entityManager as never)).toBe(entityManager);
-  });
-
-  test("throws for invalid SQL entity managers", () => {
-    expect(() => normalizeEntityManager({} as never)).toThrow(
-      "mikroOrmAdapter expected a SqlEntityManager.",
-    );
-  });
-
   test("normalizes affected row counts and count rows", () => {
     expect(normalizeAffectedRows(2)).toBe(2);
     expect(normalizeAffectedRows([3])).toBe(3);

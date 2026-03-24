@@ -19,7 +19,7 @@ describe("createSchema", () => {
       },
     } as BetterAuthOptions;
 
-    const adapter = mikroOrmAdapter(orm.em, {
+    const adapter = mikroOrmAdapter(() => orm.em, {
       generateEntity: {
         outputDir,
       },
@@ -44,7 +44,7 @@ describe("createSchema", () => {
     const orm = await createInMemoryOrm();
     const outputDir = await createTempDir("mikro-orm-better-auth-stale-");
     const options = {} as BetterAuthOptions;
-    const adapter = mikroOrmAdapter(orm.em, {
+    const adapter = mikroOrmAdapter(() => orm.em, {
       generateEntity: {
         outputDir,
       },
