@@ -30,6 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -48,4 +49,5 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
         run: npx semantic-release
